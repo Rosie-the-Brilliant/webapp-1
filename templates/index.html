@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mini Tumblr</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.5.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <h1 class="mb-4">Shower Socks</h1>
+
+    <form action="/post" method="POST" class="mb-4">
+      <textarea name="content" class="form-control" rows="3" placeholder="What's on your mind?" required></textarea>
+      <button type="submit" class="btn btn-primary mt-2">Post</button>
+    </form>
+
+    <div>
+      {% for post in posts %}
+      <div class="card mb-3">
+        <div class="card-body">
+          <p class="card-text">{{ post.content }}</p>
+          <small class="text-muted">Post #{{ post.id }}</small>
+        </div>
+      </div>
+      {% else %}
+      <p>No posts yet. Be the first!</p>
+      {% endfor %}
+    </div>
+  </div>
+</body>
+</html>
