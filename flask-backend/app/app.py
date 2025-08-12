@@ -41,27 +41,30 @@ def posts():
         conn.execute('INSERT INTO posts (content) VALUES (?)', (content,))
         conn.commit()
 
-        # showers when shower is mentioned
-        searchShower(conn)
-
         conn.close()
         return jsonify({'message': 'Post added'}), 201
 
-def searchShower(conn):
-    cursor = conn.cursor()
+@app.route('/count-word', methods=['GET'])
+def count_word():
+    word = request.args.get('word', '').lower().strip()
+    if not word:
+        return jsonify({'error': 'No word provided'}), 400
 
-    search_word = 'shower'
-    query = "SELECT * FROM posts WHERE content LIKE ?"
-    cursor.execute(query, ('%' + search_word + '%',))
+    conn = get_db_connection()
 
-    results = cursor.fetchall()
+    # Count how many posts contain the word (case-insensitive)
+    query = "SELECT COUNT(*) as count FROM posts WHERE LOWER(content) LIKE ?"
+    like_pattern = f'%{word}%'
+    result = conn.execute(query, (like_pattern,)).fetchone()
 
-    if results:
-        print(f"Found {len(results)} task(s) containing '{search_word}':")
-        for row in results:
-            print(row)
-    else:
-        print(f"No tasks found containing '{search_word}'.")
+    conn.close()
+
+    total = result['count'] if result else 0
+
+    return jsonify({
+        'search_word': word,
+        'search_count': total
+    })
 
 
 if __name__ == '__main__':
