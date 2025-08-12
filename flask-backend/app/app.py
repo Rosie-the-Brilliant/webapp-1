@@ -40,8 +40,29 @@ def posts():
         conn = get_db_connection()
         conn.execute('INSERT INTO posts (content) VALUES (?)', (content,))
         conn.commit()
+
+        # showers when shower is mentioned
+        searchShower(conn)
+
         conn.close()
         return jsonify({'message': 'Post added'}), 201
+
+def searchShower(conn):
+    cursor = conn.cursor()
+
+    search_word = 'shower'
+    query = "SELECT * FROM posts WHERE content LIKE ?"
+    cursor.execute(query, ('%' + search_word + '%',))
+
+    results = cursor.fetchall()
+
+    if results:
+        print(f"Found {len(results)} task(s) containing '{search_word}':")
+        for row in results:
+            print(row)
+    else:
+        print(f"No tasks found containing '{search_word}'.")
+
 
 if __name__ == '__main__':
     app.run(debug=True)
