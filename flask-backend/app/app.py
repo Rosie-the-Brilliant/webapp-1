@@ -1,4 +1,6 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, session
+from werkzeug.security import generate_password_hash, check_password_hash
+
 import sqlite3
 from flask_cors import CORS
 
@@ -12,16 +14,58 @@ def get_db_connection():
 
 def init_db():
     conn = get_db_connection()
+
     conn.execute('''
-        CREATE TABLE IF NOT EXISTS posts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            content TEXT NOT NULL
-        )
+    CREATE TABLE IF NOT EXISTS posts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        content TEXT NOT NULL
+    )
+    ''')
+
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL
+    )
     ''')
     conn.commit()
     conn.close()
 
 init_db()
+
+@app.route('/register', methods=['POST'])
+def register():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    if not username or not password:
+        return jsonify({'error': 'Username and password required'}), 400
+    conn = get_db_connection()
+    user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
+    if user:
+        conn.close()
+        return jsonify({'error': 'User already exists'}), 400
+    hashed = generate_password_hash(password)
+    conn.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, hashed))
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'User registered'}), 201
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    conn = get_db_connection()
+    user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
+    conn.close()
+    if user and check_password_hash(user['password'], password):
+        # For JWT, generate and return a token here
+        session['user_id'] = user['id']  # For session-based auth
+        return jsonify({'message': 'Login successful'}), 200
+    return jsonify({'error': 'Invalid credentials'}), 401
+
 
 @app.route('/posts', methods=['GET', 'POST'])
 @app.route('/posts/', methods=['GET', 'POST'])
