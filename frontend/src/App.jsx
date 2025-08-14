@@ -27,19 +27,14 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Create post and check for word
-    const { data, searchCount } = await createPostWithWordCheck(content, searchWord);
+    const { data, searchCount, showInfo } = await createPostWithWordCheck(content, searchWord, showSearchInfo);
     setContent('');
     setSearchCount(searchCount);
-
-    // put as true, and keep it true
-    if(searchCount > 0){
-      setShowSearchInfo(true);
-    }
+    setShowSearchInfo(showInfo)
 
     // Refresh posts list from backend
     const updatedPosts = await fetchPosts();
     setPosts(updatedPosts);
-    console.log("fetchecd posts:", updatedPosts);
   };
 
   return (

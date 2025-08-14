@@ -21,14 +21,15 @@ export const fetchWordCount = async (word) => {
 
 
 // posting with word check logic 
-export const createPostWithWordCheck = async (content, word) => {
+export const createPostWithWordCheck = async (content, word, showInfo) => {
   const data = await createPost(content);
 
   // Only fetch count if word is present
   let searchCount = 0;
-  if (content.toLowerCase().includes(word.toLowerCase())) {
+  if (showInfo || content.toLowerCase().includes(word.toLowerCase())) {
     const countData = await fetchWordCount(word);
     searchCount = countData.search_count || 0;
+    showInfo = true; // Always show info if word is checked
   }
-  return { data, searchCount };
+  return { data, searchCount, showInfo };
 };
