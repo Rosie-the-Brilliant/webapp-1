@@ -1,11 +1,12 @@
+
 import { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Container, Form, Button } from 'react-bootstrap';
-import PostCard from './components/PostCard';
-import { fetchPosts, createPostWithWordCheck } from './api/posts';
-import WordCounter from './components/WordCounter';
+import PostCard from '../components/PostCard';
+import { fetchPosts, createPostWithWordCheck } from '../api/posts';
+import WordCounter from '../components/WordCounter';
 
-function App() {
+function Home() {
   const [posts, setPosts] = useState([])
   const [content, setContent] = useState('')
   const [searchCount, setSearchCount] = useState(0)
@@ -71,4 +72,5 @@ function App() {
   )
 }
 
-export default App
+export default Home;
+// This component serves as the main page for the application, allowing users to create posts and view

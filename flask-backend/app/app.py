@@ -62,9 +62,12 @@ def login():
     conn.close()
     if user and check_password_hash(user['password'], password):
         # For JWT, generate and return a token here
-        session['user_id'] = user['id']  # For session-based auth
+        # session['user_id'] = user['id']  # For session-based auth
         return jsonify({'message': 'Login successful'}), 200
-    return jsonify({'error': 'Invalid credentials'}), 401
+    elif not user:
+        return jsonify({'error': 'User not found'}), 404
+    else:
+        return jsonify({'error': 'Invalid credentials'}), 401
 
 
 @app.route('/posts', methods=['GET', 'POST'])
