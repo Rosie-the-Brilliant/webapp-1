@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request, session
 from werkzeug.security import generate_password_hash, check_password_hash
+from llavaPost import llavaPost
 
 import sqlite3
 from flask_cors import CORS
@@ -29,6 +30,15 @@ def init_db():
         password TEXT NOT NULL
     )
     ''')
+
+    conn.execute('''
+    CREATE TABLE IF NOT EXISTS llm (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        post_id INTEGER NOT NULL,
+        content TEXT NOT NULL
+    )
+    ''')
+
     conn.commit()
     conn.close()
 
@@ -112,6 +122,16 @@ def count_word():
         'search_word': word,
         'search_count': total
     })
+
+@app.route("/ai_post", methods=["POST"])
+def ai_post():
+    topic = request.json.get("topic", "Write a shower thought.")
+    print(f"Generating AI post for topic: {topic}")
+    llm = llavaPost()
+    ai_content = llm.get_model_response(topic)
+
+    # Save to DB here...
+    return jsonify({"content": ai_content})
 
 
 if __name__ == '__main__':
