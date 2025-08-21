@@ -37,7 +37,7 @@ function Login() {
 
             if (res.ok) {
                 console.log('Login successful', data);
-                navigate('/');
+                navigate(`/profile/${data.user_id}`);; // Redirect to profile page
                 // save JWT or session info here
             } else if (data.error === 'User not found') {
                 setError('User not found. Please register first.');

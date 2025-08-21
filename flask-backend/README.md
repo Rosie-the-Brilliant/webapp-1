@@ -8,7 +8,7 @@ This is a simple Flask web application.
 flask-backend
 ├── app
 │   ├── __init__.py
-│   ├── routes.py
+│   ├── pages.py
 │   └── models.py
 ├── requirements.txt
 ├── config.py

@@ -84,7 +84,7 @@ function Home() {
           )}
         </Col>
 
-        <Col xs={8} className="mt-4">
+        <Col xs={4} className="mt-4">
 
           <Form onSubmit={handleSubmit} className="mb-4">
             <Form.Group controlId="postContent">

@@ -35,7 +35,7 @@ function Register() {
 
             if (res.ok) {
                 console.log('Registration successful', data);
-                navigate('/');
+                navigate(`/profile/${data.user_id}`);; // Redirect to profile page
                 // save JWT or session info here
             } else {
                 setError(data.error || 'Registration failed');
@@ -88,7 +88,6 @@ function Register() {
                                         value={content}
                                         onChange={e => setContent(e.target.value)}
                                         placeholder="What's on your mind?"
-                                        required
                                     />
                             </Col>
                     </Form.Group>

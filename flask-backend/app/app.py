@@ -6,10 +6,10 @@ import sqlite3
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+CORS(app)
 
 def get_db_connection():
-    conn = sqlite3.connect('posts.db')
+    conn = sqlite3.connect('app.db')
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -19,15 +19,25 @@ def init_db():
     conn.execute('''
     CREATE TABLE IF NOT EXISTS posts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        content TEXT NOT NULL
+        user_id INTEGER DEFAULT 0,
+        content TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id)
     )
+
     ''')
 
     conn.execute('''
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL
+        password TEXT NOT NULL,
+        name TEXT DEFAULT '',
+        bio TEXT DEFAULT '',
+        profile_picture TEXT DEFAULT '',
+        followers INTEGER DEFAULT 0,
+        following INTEGER DEFAULT 0,
+        joined TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     ''')
 
@@ -56,11 +66,13 @@ def register():
     if user:
         conn.close()
         return jsonify({'error': 'User already exists'}), 400
+    
     hashed = generate_password_hash(password)
     conn.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, hashed))
     conn.commit()
+    user = conn.execute('SELECT last_insert_rowid()').fetchone()[0]
     conn.close()
-    return jsonify({'message': 'User registered'}), 201
+    return jsonify({'message': 'User registered', 'user_id': user}), 201
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -73,13 +85,64 @@ def login():
     if user and check_password_hash(user['password'], password):
         # For JWT, generate and return a token here
         # session['user_id'] = user['id']  # For session-based auth
-        return jsonify({'message': 'Login successful'}), 200
+        return jsonify({'message': 'Login successful', 'user_id': user['id']}), 200
     elif not user:
         return jsonify({'error': 'User not found'}), 404
     else:
         return jsonify({'error': 'Invalid credentials'}), 401
 
 
+# --- USER PROFILE ---
+@app.route("/users/<int:user_id>", methods=["GET"])
+def get_user_profile(user_id):
+    conn = get_db_connection()
+    user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    user_dict = dict(user)
+    user_dict.pop('password', None)  # Remove password from response
+    conn.close()
+    return jsonify(user_dict)
+
+
+# --- USER POSTS ---
+@app.route("/users/<int:user_id>/posts", methods=["GET"])
+def get_user_posts(user_id):
+    # TODO: Implement user posts retrieval
+    conn = get_db_connection()
+    user_posts = conn.execute('SELECT * FROM posts WHERE user_id = ?', (user_id,)).fetchall()
+    if not user_posts:
+        return jsonify([{"message": "No posts found for this user"}]), 200
+    user_posts = [dict(post) for post in user_posts]
+    conn.close()
+    return jsonify(user_posts)
+
+
+# --- UPDATE PROFILE (e.g., bio) ---
+@app.route("/users/<int:user_id>", methods=["PUT"])
+def update_user_profile(user_id):
+    conn = get_db_connection()
+    user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    
+    bio = data.get('bio', user['bio'])
+    followers = data.get('followers', user['followers'])
+    following = data.get('following', user['following'])
+
+    conn.execute('UPDATE users SET bio = ?, followers = ?, following = ? WHERE id = ?',
+                 (bio, followers, following, user_id))
+    conn.commit()
+    conn.close()
+    user_dict = dict(user)
+    user_dict.pop('password', None)  # Remove password from response
+    return jsonify(user)
+
+   
 @app.route('/posts', methods=['GET', 'POST'])
 @app.route('/posts/', methods=['GET', 'POST'])
 def posts():
